@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
     private io.socket.client.Socket socket;
 
-    private static final String SERVER = "http://192.168.8.137";
+    private static final String SERVER = "http://10.0.2.2";
 
     private static final int ID_REQUEST_STORAGE = 100;
     private static final int ID_REQUEST_READ_STORAGE = 110;
