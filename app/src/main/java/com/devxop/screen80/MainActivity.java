@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
     private io.socket.client.Socket socket;
 
-    private static final String SERVER = "http://10.0.2.2";
+    private static final String SERVER = "http://api.devxop.com";
 
     private static final int ID_REQUEST_STORAGE = 100;
     private static final int ID_REQUEST_READ_STORAGE = 110;
@@ -103,8 +103,19 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        imageView = findViewById(R.id.myImageView);
-        videoView = findViewById(R.id.myVideoView);
+
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // No explanation needed; request the permission
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    ID_REQUEST_STORAGE);
+        } else {
+            imageView = findViewById(R.id.myImageView);
+            videoView = findViewById(R.id.myVideoView);
 
 
 
@@ -118,54 +129,43 @@ public class MainActivity extends AppCompatActivity {
             }
         });*/
 
-        videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-            @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
-                setDisplayView("videos");
-                return false;
-            }
-        });
+            videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    setDisplayView("videos");
+                    return false;
+                }
+            });
 
-        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(final MediaPlayer mp) {
-                Log.d("MEDIAL PLAYER", "Duration video:´" + videoView.getDuration());
+            videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(final MediaPlayer mp) {
+                    Log.d("MEDIAL PLAYER", "Duration video:´" + videoView.getDuration());
                 /*PlaybackParams myPlayBackParams = new PlaybackParams();
                 myPlayBackParams.setSpeed(2f); //you can set speed here
                 mp.setPlaybackParams(myPlayBackParams);*/
-                mp.setLooping(true);
-                //mp.start();
+                    mp.setLooping(true);
+                    //mp.start();
+                }
+            });
+
+
+
+            br = new DownloadBroadcastReceiver();
+            IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+            filter.addAction(Intent.ACTION_INPUT_METHOD_CHANGED);
+            this.registerReceiver(br, filter);
+
+            try {
+                APP_PATH = getDataDir(getApplicationContext());
+                StorageManager.set(getApplicationContext(), "app_path", APP_PATH);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        });
+            STORAGE_VIDEO = APP_PATH + "/devxop/videos";
+            STORAGE_IMAGE = APP_PATH + "/devxop/images";
+            Config.STORAGE_UPGRADE = APP_PATH + "/devxop/apk";
 
-
-
-        br = new DownloadBroadcastReceiver();
-        IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        filter.addAction(Intent.ACTION_INPUT_METHOD_CHANGED);
-        this.registerReceiver(br, filter);
-
-        try {
-            APP_PATH = getDataDir(getApplicationContext());
-            StorageManager.set(getApplicationContext(), "app_path", APP_PATH);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        STORAGE_VIDEO = APP_PATH + "/devxop/videos";
-        STORAGE_IMAGE = APP_PATH + "/devxop/images";
-        Config.STORAGE_UPGRADE = APP_PATH + "/devxop/apk";
-
-
-        // Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(MainActivity.this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // No explanation needed; request the permission
-            ActivityCompat.requestPermissions(MainActivity.this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    ID_REQUEST_STORAGE);
-        } else {
             // Permission has already been granted -> Start
             //setup published view offline
             String view = StorageManager.get(getApplicationContext(), StorageManager.PUBLISHED_VIEW);
@@ -614,7 +614,10 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
 
         if(br != null)
-            unregisterReceiver(br);
+            try{
+                unregisterReceiver(br);
+            }catch (Exception ex){}
+
     }
 
     public void removeFileWithName(String location, String filename) {

@@ -149,10 +149,9 @@ public class DownloadFile extends AsyncTask<String, String, String> {
             e.printStackTrace();
             //forceUpdate();
             File from = new File(storagePath,this.fileName + "_undefined");
-            if(from.exists()){
+            if(from.exists()) {
                 from.delete();
             }
-
         }
 
 
